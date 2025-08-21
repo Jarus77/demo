@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Footing Analysis - Bar Bending Schedule Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <div class="logo-icon">🏗️</div>
+                <h1>AI Footing Analysis</h1>
+            </div>
+            <div class="header-controls">
+                <button id="explainability-toggle" class="btn-secondary">
+                    <span class="toggle-text">Show Steps</span>
+                </button>
+                <button id="audit-toggle" class="btn-secondary">
+                    <span class="toggle-text">Show Assumptions</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Upload Section -->
+            <section id="upload-section" class="upload-section">
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-content">
+                        <div class="upload-icon">📁</div>
+                        <h3>Drop your footing layout here</h3>
+                        <p>or click to browse</p>
+                        <input type="file" id="file-input" accept="image/*" hidden>
+                    </div>
+                </div>
+                
+                <!-- Sample Image Button -->
+                <div class="sample-section">
+                    <p>Don't have a drawing? Try our sample:</p>
+                    <button id="load-sample" class="btn-primary">Load Sample Footing Layout</button>
+                </div>
+            </section>
+
+            <!-- Analysis Section (Hidden initially) -->
+            <section id="analysis-section" class="analysis-section" style="display: none;">
+                <!-- Image with Overlays -->
+                <div class="image-container">
+                    <img id="footing-image" src="" alt="Footing Layout">
+                    <div id="overlay-container" class="overlay-container"></div>
+                    
+                    <!-- Scanning Animation -->
+                    <div id="scanning-animation" class="scanning-animation">
+                        <div class="scan-line"></div>
+                        <div class="scan-beep">🔍</div>
+                    </div>
+                </div>
+
+                <!-- Results Panel -->
+                <div class="results-panel">
+                    <div class="panel-header">
+                        <h3>Bar Bending Schedule</h3>
+                        <div class="confidence-badge">
+                            <span class="confidence-label">Confidence:</span>
+                            <span class="confidence-value" id="confidence-value">0.97</span>
+                        </div>
+                    </div>
+
+                    <!-- BBS Table -->
+                    <div class="bbs-table-container">
+                        <table class="bbs-table">
+                            <thead>
+                                <tr>
+                                    <th>Direction</th>
+                                    <th>Bars/Footing</th>
+                                    <th>Cutting Length (m)</th>
+                                    <th>Unit Weight (kg/m)</th>
+                                    <th>Weight/Footing (kg)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bbs-tbody">
+                                <!-- Populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Summary -->
+                    <div class="summary-section">
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <label>F1 Footings:</label>
+                                <span id="f1-count">16</span>
+                            </div>
+                            <div class="summary-item">
+                                <label>F2 Footings:</label>
+                                <span id="f2-count">4</span>
+                            </div>
+                            <div class="summary-item">
+                                <label>Total Steel:</label>
+                                <span id="total-steel">720 kg</span>
+                            </div>
+                            <div class="summary-item">
+                                <label>Total Cost:</label>
+                                <span id="total-cost">₹36,000</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- What-if Controls -->
+                    <div class="what-if-section">
+                        <h4>Adjust Parameters</h4>
+                        <div class="control-group">
+                            <label for="steel-rate">Steel Rate (₹/kg):</label>
+                            <input type="number" id="steel-rate" value="50" min="30" max="100">
+                        </div>
+                        <div class="control-group">
+                            <label for="cover-value">Cover (mm):</label>
+                            <input type="number" id="cover-value" value="50" min="25" max="75">
+                        </div>
+                    </div>
+
+                    <!-- Export Buttons -->
+                    <div class="export-section">
+                        <button id="export-bbs" class="btn-primary">Download BBS (CSV)</button>
+                        <button id="export-drawing" class="btn-secondary">Download Annotated Drawing</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Explainability Panel (Hidden initially) -->
+            <section id="explainability-panel" class="explainability-panel" style="display: none;">
+                <div class="panel-header">
+                    <h3>Calculation Steps</h3>
+                    <button id="close-explainability" class="btn-close">×</button>
+                </div>
+                <div class="steps-container">
+                    <div class="step">
+                        <h4>Step 1: Bars per Direction</h4>
+                        <div class="formula">
+                            <p><strong>A-direction:</strong> N<sub>A</sub> = ⌊(B - 2c)/s⌋ + 1</p>
+                            <p class="substitution">N<sub>A</sub> = ⌊(1800 - 2×50)/150⌋ + 1 = <span class="highlight">12</span></p>
+                        </div>
+                        <div class="formula">
+                            <p><strong>B-direction:</strong> N<sub>B</sub> = ⌊(A - 2c)/s⌋ + 1</p>
+                            <p class="substitution">N<sub>B</sub> = ⌊(1800 - 2×50)/150⌋ + 1 = <span class="highlight">12</span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <h4>Step 2: Cutting Length</h4>
+                        <div class="formula">
+                            <p><strong>A-direction:</strong> L<sub>A</sub> = (A - 2c) + 2(d₁ - 2c) - 4φ</p>
+                            <p class="substitution">L<sub>A</sub> = (1800 - 2×50) + 2(250 - 2×50) - 4×12 = <span class="highlight">1.952 m</span></p>
+                        </div>
+                        <div class="formula">
+                            <p><strong>B-direction:</strong> L<sub>B</sub> = (B - 2c) + 2(d₁ - 2c - φ) - 4φ</p>
+                            <p class="substitution">L<sub>B</sub> = (1800 - 2×50) + 2(250 - 2×50 - 12) - 4×12 = <span class="highlight">1.928 m</span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <h4>Step 3: Weight Calculation</h4>
+                        <div class="formula">
+                            <p><strong>Weight per footing:</strong> W = N<sub>A</sub> × L<sub>A</sub> × 0.889 + N<sub>B</sub> × L<sub>B</sub> × 0.889</p>
+                            <p class="substitution">W = 12 × 1.952 × 0.889 + 12 × 1.928 × 0.889 = <span class="highlight">45.2 kg</span></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Audit Panel (Hidden initially) -->
+            <section id="audit-panel" class="audit-panel" style="display: none;">
+                <div class="panel-header">
+                    <h3>Assumptions & Standards</h3>
+                    <button id="close-audit" class="btn-close">×</button>
+                </div>
+                <div class="assumptions-list">
+                    <div class="assumption-item">
+                        <strong>Bend Style:</strong> Double 90° bends
+                    </div>
+                    <div class="assumption-item">
+                        <strong>Bend Deduction:</strong> 4φ (4 × 12mm = 48mm)
+                    </div>
+                    <div class="assumption-item">
+                        <strong>Cover:</strong> 50mm (standard for footings)
+                    </div>
+                    <div class="assumption-item">
+                        <strong>Unit Weight:</strong> 12mm bars = 0.889 kg/m (IS 1786)
+                    </div>
+                    <div class="assumption-item">
+                        <strong>Spacing:</strong> As per schedule (F1: 150mm, F2: 170mm)
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
